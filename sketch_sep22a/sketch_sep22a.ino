@@ -18,6 +18,11 @@ String output17State = "off";
 //output variables
 const int output17 = 17;
 
+int sensorValue = 0;
+int outputValue = 0;
+int x = 0;
+
+
 void setup() {
   Serial.begin(115200);
   // put your setup code here, to run once:
@@ -34,7 +39,7 @@ void setup() {
   IPAddress IP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(IP);
-  
+
   server.begin();
 
 }
@@ -42,6 +47,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
    WiFiClient client = server.available();   // Listen for incoming clients
+
 
   if (client) {                             // If a new client connects,
     Serial.println("New Client.");          // print a message out in the serial port
@@ -74,8 +80,10 @@ void loop() {
             }
             
             // Display the HTML web page
+            x = x + 1;
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<meta http-equiv=\"refresh\" content=\"5\">");
             client.println("<link rel=\"icon\" href=\"data:,\">");
             // CSS to style the on/off buttons 
             // Feel free to change the background-color and font-size attributes to fit your preferences
@@ -95,6 +103,8 @@ void loop() {
             } else {
               client.println("<p><a href=\"/17/off\"><button class=\"button button2\">OFF</button></a></p>");
             } 
+            sensorValue = analogRead(output17);
+            client.println(sensorValue);
             // If the output27State is off, it displays the ON button       
             client.println("</body></html>");
             
