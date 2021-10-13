@@ -17,3 +17,4 @@
    6. Fáze: Testování, ukončení vývoje
 
 #### Povedlo se mi přiřadit IP k ESP a vytvořit z něj Access Point. Asi to není nejlepší řešení, ale alespoň je snadno přenosný, nemusí se složitě připojovat na router, jelikož jím sám je.
+#### Na stránku se přiřazují hodnoty trimru (prozatím není zapojený teploměr, takže to musí stačit)
