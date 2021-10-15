@@ -21,6 +21,8 @@ const int output17 = 17;
 int sensorValue = 0;
 int outputValue = 0;
 int x = 0;
+int i = 0;
+int hodnota;
 
 
 void setup() {
@@ -103,8 +105,16 @@ void loop() {
             } else {
               client.println("<p><a href=\"/17/off\"><button class=\"button button2\">OFF</button></a></p>");
             } 
-            sensorValue = analogRead(output17);
-            client.println(sensorValue);
+            for(; i < 32; i++){
+              hodnota = analogRead(output17);
+              client.println(hodnota);
+              break;
+            }
+            if(i == 31){
+              i = 0;
+              WiFi.disconnect();
+            
+            }
             // If the output27State is off, it displays the ON button       
             client.println("</body></html>");
             
