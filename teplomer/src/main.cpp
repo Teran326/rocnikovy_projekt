@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPmDNS.h>
+#include <AsyncJson.h>
+#include <SPIFFS.h>
 
 // Replace with your network credentials
 const char* ssid     = "AndroidAP_8064";
@@ -36,9 +40,41 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   server.begin();
-  server.on("../lib", root);
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, PUT");
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "*");
+
+  server.addHandler(new AsyncCallbackJsonWebHandler("/led", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    const JsonObject &jsonObj = json.as<JsonObject>();
+    if (jsonObj["on"])
+    {
+      Serial.println("Turn on LED");
+      digitalWrite(BUILTIN_LED, HIGH);
+    }
+    else
+    {
+      Serial.println("Turn off LED");
+      digitalWrite(BUILTIN_LED, LOW);
+    }
+    request->send(200, "OK");
+  }));
+
+  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    if (request->method() == HTTP_OPTIONS)
+    {
+      request->send(200);
+    }
+    else
+    {
+      Serial.println("Not found");
+      request->send(404, "Not found");
+    }
+  });
+
+  server.begin();
 }
 
 void loop(){
-  server.handleClient();
 }
