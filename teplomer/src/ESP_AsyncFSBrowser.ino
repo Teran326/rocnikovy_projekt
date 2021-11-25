@@ -17,6 +17,7 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncEventSource events("/events");
+const int output17 = 17;
 
 void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   if(type == WS_EVT_CONNECT){
@@ -215,7 +216,19 @@ void setup(){
   server.begin();
 }
 
+void teplota(){
+  server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){
+    for(int i = 0; i< 30; i++){
+      delay(2000);
+      char* teplota;
+      teplota[i] = analogRead(output17);
+      request->send(200, "text/plain", teplota); 
+  }
+  });
+}
+
 void loop(){
   ArduinoOTA.handle();
   ws.cleanupClients();
+  teplota();
 }
