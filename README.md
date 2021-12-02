@@ -2,7 +2,7 @@
 ## Projekt Lednička
 ## Cíl: Teploměr by měl měřit danou teplotu v lednici a následně ji zapsat na webserver, ze kterého by bylo možné si dané výsledky stáhnout a vytisknout. 
 ##      Zaznamenávání teploty a času
-### Zdroje: https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-class.html#softapip, http://arduino.esp8266.com/Arduino/versions/2.1.0-rc1/doc/libraries.html, https://jpralves.net/post/2016/11/15/esp8266.html#esp-201, [How to use the javascript fetch api to get data](https://www.geeksforgeeks.org/how-to-use-the-javascript-fetch-api-to-get-data/)
+### Zdroje: [Arduino libraries](http://arduino.esp8266.com/Arduino/versions/2.1.0-rc1/doc/libraries.html), [ESP sheets](https://jpralves.net/post/2016/11/15/esp8266.html#esp-201), [How to use the javascript fetch api to get data](https://www.geeksforgeeks.org/how-to-use-the-javascript-fetch-api-to-get-data/)
 ### FrameWork: C/C++
 ### Konkurence:
 ### Knihovny: 
