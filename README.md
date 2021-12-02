@@ -2,10 +2,13 @@
 ## Projekt Lednička
 ## Cíl: Teploměr by měl měřit danou teplotu v lednici a následně ji zapsat na webserver, ze kterého by bylo možné si dané výsledky stáhnout a vytisknout. 
 ##      Zaznamenávání teploty a času
-### Zdroje: https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-class.html#softapip, http://arduino.esp8266.com/Arduino/versions/2.1.0-rc1/doc/libraries.html, https://jpralves.net/post/2016/11/15/esp8266.html#esp-201
+### Zdroje: https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-class.html#softapip
+            http://arduino.esp8266.com/Arduino/versions/2.1.0-rc1/doc/libraries.html
+            https://jpralves.net/post/2016/11/15/esp8266.html#esp-201
+            https://www.geeksforgeeks.org/how-to-use-the-javascript-fetch-api-to-get-data/
 ### FrameWork: C/C++
 ### Konkurence:
-### Knihovny: WifiClient, ESP8266WiFi
+### Knihovny: 
 
 
 ### Rozdělení do fází:
@@ -20,3 +23,5 @@
 #### Na stránku se přiřazují hodnoty trimru (prozatím není zapojený teploměr, takže to musí stačit)
 #### Místo AP jsem nakonec udělal WebServer, bohužel nemůžu najít knihovny ESPmDNS.h a SPIFFS.h
 #### Přidání měření teploty
+#### Vytvoření REST API a práce na JS pro výpis dat
+#### Hledání zdrojů o REST API
