@@ -1,103 +1,75 @@
-#include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <SimpleTime.h>
- 
+
+#include "index.h"  //Web page header file
+
+ESP8266WebServer server(80);
+
+//Enter your SSID and PASSWORD
 const char* ssid = "wifi";
 const char* password = "0700848237";
-const int pin = 17;
-int sensorValue;
-int i = 0;
- 
-ESP8266WebServer server(80);
- 
-// Serving Hello world
 
-
-
-
-void teplota(){
-    /*time_t cas = time(system_get_time());
-    int hodina = hour(cas);
-    int minuta = minute(cas);
-    int den = day(cas);
-    int mesic = month(cas);
-    int rok = year(cas);
-    String datum = "";
-    datum += den;
-    datum += ".";
-    datum += mesic;
-    datum += ".";
-    datum += rok;
-    datum += " ";
-    datum += hodina;
-    datum += ":";
-    datum += minuta;*/
-    sensorValue = analogRead(pin);
-    String data = "";
-    data += sensorValue;
-    //server.send(200, "text/plain", datum);
-    server.send(200, "text/plain", data);
+//===============================================================
+// This routine is executed when you open its IP in browser
+//===============================================================
+void handleRoot() {
+ String s = MAIN_page; //Read HTML contents
+ server.send(200, "text/html", s); //Send web page
 }
  
-// Define routing
-void restServerRouting() {
-  server.on("/", HTTP_GET, teplota);
-}
+void handleADC() {
+ int a = analogRead(A0);
+ String adcValue = String(a);
  
-// Manage not found URL
-void handleNotFound() {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
+ server.send(200, "text/plane", adcValue); //Send ADC value only to client ajax request
 }
- 
-void setup(void) {
-  pinMode(pin, OUTPUT);
+
+//===============================================================
+// Setup
+//===============================================================
+
+void setup(void){
   Serial.begin(9600);
-  WiFi.mode(WIFI_STA);
+  Serial.println();
+  Serial.println("Booting Sketch...");
+
+/*
+//ESP32 As access point
+  WiFi.mode(WIFI_AP); //Access Point mode
+  WiFi.softAP(ssid, password);
+*/
+//ESP32 connects to your wifi -----------------------------------
+  WiFi.mode(WIFI_STA); //Connectto your wifi
   WiFi.begin(ssid, password);
-  Serial.println("");
- 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+
+  Serial.println("Connecting to ");
+  Serial.print(ssid);
+
+  //Wait for WiFi to connect
+  while(WiFi.waitForConnectResult() != WL_CONNECTED){      
+      Serial.print(".");
+    }
+    
+  //If connection successful show IP address in serial monitor
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
   Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+//----------------------------------------------------------------
  
-  // Activate mDNS this is used to be able to connect to the server
-  // with local DNS hostmane esp8266.local
-  if (MDNS.begin("esp8266")) {
-    Serial.println("MDNS responder started");
-  }
+  server.on("/", handleRoot);      //This is display page
+  server.on("/readADC", handleADC);//To get update of ADC Value only
  
-  // Set server routing
-  
-  // Set not found response
-  server.onNotFound(handleNotFound);
-  // Start server
-  server.begin();
+  server.begin();                  //Start server
   Serial.println("HTTP server started");
 }
- 
-void loop(void) {
+
+//===============================================================
+// This routine is executed when you open its IP in browser
+//===============================================================
+void loop(void){
   server.handleClient();
-  restServerRouting();
-  delay(2000);
+  delay(1);
 }
