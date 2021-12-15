@@ -1,56 +1,140 @@
 const char MAIN_page[] PROGMEM = R"=====(
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <link rel="stylesheet" href="../style/style.css">
-</head>
-<style>
-body{
-    background: #76BED0;
-}
-.card{
-    max-width: 400px;
-     min-height: 250px;
-     background: #F33B16;
-     padding: 30px;
-     box-sizing: border-box;
-     color: #FFF;
-     margin-right:auto;
-     margin-left: auto;
-     box-shadow: 0px 2px 18px -4px rgba(0,0,0,0.75);
-}
-h1{text-align: center;}
-button{
-    margin-left: auto;
-    margin-right: auto;
-}
-</style>
-<body>
 
-<div class="card">
-  <h1>Teplota:</h1><br>
-  <h1><span id="ADCValue">0</span></h1><br>
-  <button>EXPORT</button>
+<head>
+	<title>Teplomer</title>
+	<script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>	
+	<style>
+	canvas{
+		-moz-user-select: none;
+		-webkit-user-select: none;
+		-ms-user-select: none;
+	}
+
+	/* Data Table Styling */
+	#dataTable {
+	  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+	  border-collapse: collapse;
+	  width: 100%;
+	}
+
+	#dataTable td, #dataTable th {
+	  border: 1px solid #ddd;
+	  padding: 8px;
+	}
+
+	#dataTable tr:nth-child(even){background-color: #f2f2f2;}
+
+	#dataTable tr:hover {background-color: #ddd;}
+
+	#dataTable th {
+	  padding-top: 12px;
+	  padding-bottom: 12px;
+	  text-align: left;
+	  background-color: #4CAF50;
+	  color: white;
+	}
+	</style>
+</head>
+
+<body>
+    <div style="text-align:center;">Teplota</div>
+    <div class="chart-container" position: relative; height:350px; width:100%">
+        <canvas id="Chart" width="400" height="400"></canvas>
+    </div>
+<div>
+	<table id="dataTable">
+	  <tr><th>Cas</th><th>Teplota</th></tr>
+	</table>
 </div>
+<br>
+<br>	
+
 <script>
+var values = [];
+var timeStamp = [];
+function showGraph()
+{
+    for (i = 0; i < arguments.length; i++) {
+    	values.push(arguments[i]);    
+    }
+
+    var ctx = document.getElementById("Chart").getContext('2d');
+    var Chart2 = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeStamp,	//Bottom Labeling
+            datasets: [{
+                label: "Teplota",
+                fill: false,	//Try with true
+                backgroundColor: 'rgba( 243, 156, 18 , 1)', //Dot marker color
+                borderColor: 'rgba( 243, 156, 18 , 1)',	//Graph Line Color
+                data: values,
+            }],
+        },
+        options: {
+            title: {
+                    display: true,
+                    text: "Teplota"
+                },
+            maintainAspectRatio: false,
+            elements: {
+            line: {
+                    tension: 0.5 //Smoothening (Curved) of data lines
+                }
+            },
+            scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        }
+                    }]
+            }
+        }
+    });
+
+}
+
+//On Page load show graphs
+window.onload = function() {
+	console.log(new Date().toLocaleTimeString());
+	showGraph(5,10,4,58);
+};
+
+//Ajax script to get ADC voltage at every 5 Seconds 
 
 setInterval(function() {
-  // Call a function repetatively with 2 Second interval
+  // Call a function repetatively with 5 Second interval
   getData();
-}, 2000); //2000mSeconds update rate
-
+}, 2000); //5000mSeconds update rate
+ 
 function getData() {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("ADCValue").innerHTML =
-      this.responseText;
+     //Push the data in array
+	var time = new Date().toLocaleTimeString();
+	var ADCValue = this.responseText; 
+      values.push(ADCValue);
+      timeStamp.push(time);
+      showGraph();	//Update Graphs
+	//Update Data Table
+	  var table = document.getElementById("dataTable");
+	  var row = table.insertRow(1);	//Add after headings
+	  var cell1 = row.insertCell(0);
+	  var cell2 = row.insertCell(1);
+	  cell1.innerHTML = time;
+	  cell2.innerHTML = ADCValue;
     }
   };
-  xhttp.open("GET", "readADC", true);
+  xhttp.open("GET", "readADC", true);	//Handle readADC server on ESP8266
   xhttp.send();
 }
+		
 </script>
 </body>
+
 </html>
+
 )=====";

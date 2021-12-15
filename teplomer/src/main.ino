@@ -1,14 +1,22 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
 
 #include "index.h"  //Web page header file
+
+//defining temperature sensor
+#define DHTPIN 4
+#define DHTTYPE 11
+DHT dht(DHTPIN, DHTTYPE);
+
 
 ESP8266WebServer server(80);
 
 //Enter your SSID and PASSWORD
-const char* ssid = "wifi";
-const char* password = "0700848237";
+const char* ssid = "YOUR-SSID-HERE";
+const char* password = "YOUR-PASSWORD-HERE";
 
 //===============================================================
 // This routine is executed when you open its IP in browser
@@ -18,29 +26,26 @@ void handleRoot() {
  server.send(200, "text/html", s); //Send web page
 }
  
-void handleADC() {
- int a = analogRead(A0);
- String adcValue = String(a);
- 
- server.send(200, "text/plane", adcValue); //Send ADC value only to client ajax request
-}
+ //reading temperature
+void handleTemp() {
+  float t = dht.readTemperature();
+  if (isnan(t)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+ String value = String(t);
 
-//===============================================================
-// Setup
-//===============================================================
+ 
+ server.send(200, "text/plane", value); //Send value only to client ajax request
+}
 
 void setup(void){
   Serial.begin(9600);
   Serial.println();
   Serial.println("Booting Sketch...");
 
-/*
-//ESP32 As access point
-  WiFi.mode(WIFI_AP); //Access Point mode
-  WiFi.softAP(ssid, password);
-*/
 //ESP32 connects to your wifi -----------------------------------
-  WiFi.mode(WIFI_STA); //Connectto your wifi
+  WiFi.mode(WIFI_STA); //Connect to your wifi
   WiFi.begin(ssid, password);
 
   Serial.println("Connecting to ");
@@ -60,15 +65,13 @@ void setup(void){
 //----------------------------------------------------------------
  
   server.on("/", handleRoot);      //This is display page
-  server.on("/readADC", handleADC);//To get update of ADC Value only
+  server.on("/readADC", handleTemp);//To get update of value only
  
+  dht.begin();
   server.begin();                  //Start server
   Serial.println("HTTP server started");
 }
 
-//===============================================================
-// This routine is executed when you open its IP in browser
-//===============================================================
 void loop(void){
   server.handleClient();
   delay(1);
