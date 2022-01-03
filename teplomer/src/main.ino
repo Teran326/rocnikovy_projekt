@@ -15,8 +15,14 @@ DHT dht(DHTPIN, DHTTYPE);
 ESP8266WebServer server(80);
 
 //Enter your SSID and PASSWORD
-const char* ssid = "YOUR-SSID-HERE";
-const char* password = "YOUR-PASSWORD-HERE";
+const char* ssid = "YOUR-SSID";
+const char* password = "YOUR-PASSWORD";
+// Set your Static IP address
+IPAddress local_IP(192, 168, 1, 2);
+// Set your Gateway
+IPAddress gateway(192, 168, 1, 1);
+// Set your Subnet Mask
+IPAddress subnet(255, 255, 255, 0);
 
 //===============================================================
 // This routine is executed when you open its IP in browser
@@ -44,8 +50,12 @@ void setup(void){
   Serial.println();
   Serial.println("Booting Sketch...");
 
+  // Configures static IP address
+  if (!WiFi.config(local_IP, gateway, subnet)) {
+  Serial.println("STA Failed to configure");
+  }
+
 //ESP32 connects to your wifi -----------------------------------
-  WiFi.mode(WIFI_STA); //Connect to your wifi
   WiFi.begin(ssid, password);
 
   Serial.println("Connecting to ");
