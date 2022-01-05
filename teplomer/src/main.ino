@@ -1,25 +1,26 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-//#include <ESP8266WebServer.h>
+#include <ESP8266WebServer.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <LittleFS.h>
-#include <FS.h>
-#include <ESPAsyncWebServer.h>
+//#include <FS.h>
+//#include <ESPAsyncWebServer.h>
 
-#include "index.h"  //Web page header file
+
+//#include "index.h"  //Web page header file
 
 //defining temperature sensor
-#define DHTPIN 4
-#define DHTTYPE 11
+#define DHTPIN 2
+#define DHTTYPE 22
 DHT dht(DHTPIN, DHTTYPE);
 
 
-AsyncWebServer server(80);
+ESP8266WebServer server(80);
 
 //Enter your SSID and PASSWORD
-const char* ssid = "SSID";
-const char* password = "PASSWORD";
+const char* ssid = "wifi";
+const char* password = "0700848237";
 // Set your Static IP address
 IPAddress local_IP(10, 0, 1, 200);
 // Set your Gateway
@@ -35,7 +36,7 @@ IPAddress subnet(255, 255, 255, 0);
 //===============================================================
  
  //reading temperature
-/*void handleTemp() {
+void handleTemp() {
   float t = dht.readTemperature();
   if (isnan(t)) {
     Serial.println(F("Failed to read from DHT sensor!"));
@@ -45,7 +46,7 @@ IPAddress subnet(255, 255, 255, 0);
 
  
  server.send(200, "text/plane", value); //Send value only to client ajax request
-}*/
+}
 
 void fileWriting(){
   File file = LittleFS.open("/file.txt", "w");
@@ -66,6 +67,32 @@ void fileWriting(){
   }
  
   file.close();
+}
+
+
+void handleIndex(){
+  File file = LittleFS.open("/index.html", "r");
+  server.streamFile(file, "text/html");
+  file.close();
+}
+
+void handleFileList()
+{
+  String path = "/";
+  // Assuming there are no subdirectories
+  Dir dir = SPIFFS.openDir(path);
+  String output = "[";
+  while(dir.next())
+  {
+    File entry = dir.openFile("r");
+    // Separate by comma if there are multiple files
+    if(output != "[")
+      output += ",";
+    output += String(entry.name()).substring(1);
+    entry.close();
+  }
+  output += "]";
+  server.send(200, "text/plain", output);
 }
 
 void setup(void){
@@ -103,13 +130,10 @@ void setup(void){
   Serial.println(WiFi.localIP());  //IP address assigned to your ESP
 //----------------------------------------------------------------
 
-  fileWriting();
-
  
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) { //cesta pro root / webové stránky
-    request->send(LittleFS, "/index.html", String(), false);
-  });     //This is display page
-  //server.on("/readADC", handleTemp);//To get update of value only
+  server.on("/", HTTP_GET, handleIndex);   //This is display page
+  server.on("/list", HTTP_GET, handleFileList);
+  server.on("/readADC", handleTemp);//To get update of value only
  
   dht.begin();
   server.begin();                  //Start server
@@ -117,6 +141,6 @@ void setup(void){
 }
 
 void loop(void){
-  //server.handleClient();
-  //delay(1);
+  server.handleClient();
+  delay(1);
 }
