@@ -40,7 +40,7 @@ void setup() {
     Serial.println(WiFi.localIP());
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", "Hello, world");
+        request->send(200, "/index.html", "text/plain");
     });
 
     // Send a GET request to <IP>/get?message=<message>
