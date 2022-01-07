@@ -14,50 +14,46 @@
 #include <ESPAsyncTCP.h>
 #endif
 #include <ESPAsyncWebServer.h>
-#include <LittleFS.h>
+//#include <LittleFS.h>
 #include <Adafruit_Sensor.h>
-#include <dht.h>
-//#include <FS.h>
+#include <FS.h>
 
 AsyncWebServer server(80);
 
-const char* ssid = "wifi";
-const char* password = "0700848237";
+const char* ssid = "AndroidAP_8064";
+const char* password = "something";
 
 const char* PARAM_MESSAGE = "message";
 
-#define DHTPIN 4
-#define DHTTYPE 22
-DHT dht(DHTPIN, DHTTYPE);
+const long duration = 5000;
+long rememberTime=0;
+
+//#define DHTPIN 4
+//#define DHTTYPE 22
+//DHT dht(DHTPIN, DHTTYPE);
 
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
-String temp() {
-  float t = dht.readTemperature();
-  String value;
-  if (isnan(t)) {
-    Serial.println(F("Failed to read from DHT sensor!"));
-    value = String(0);
-  }
-  else{
-      value = String(t);
-  }
- return value;
+
+void write(){
+    File file = SPIFFS.open("/data.txt", "w");
+    file.close();
 }
 
-void writeTemperature(){
-  File file = LittleFS.open("/temp.txt", "w");
-  String value = temp();
- 
-  if (!file) {
-    Serial.println("Error opening file for writing");
-    return;
-  }
- 
-file.print(value);
-    Serial.write(file.read());
-  file.close();
+void append(){
+    File file = SPIFFS.open("/data.txt", "a");
+    file.print("temperature ");
+    file.close();
+}
+
+void read(){
+    File file = SPIFFS.open("/data.txt", "r");
+    while(file.available()){
+        Serial.write(file.read());
+    }
+    Serial.println();
+    file.close();
 }
 
 void setup() {
@@ -70,22 +66,33 @@ void setup() {
         Serial.printf("WiFi Failed!\n");
         return;
     }
-    if(!LittleFS.begin()){
+    if(!SPIFFS.begin()){
         Serial.println("Failed to start File System");
         return;
     }
-    //writeTemperature();
+    String str = "";
+Dir dir = SPIFFS.openDir("/");
+while (dir.next()) {
+    str += dir.fileName();
+    str += " / ";
+    str += dir.fileSize();
+    str += "\r\n";
+}
+Serial.print(str);
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(LittleFS, "/index.html", "text/html");
+        request->send(SPIFFS, "/index.html", "text/html");
     });
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(LittleFS, "/style.css", "text/css");
+        request->send(SPIFFS, "/style.css", "text/css");
     });
     server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(LittleFS, "/script.js", "text/javascript");
+        request->send(SPIFFS, "/script.js", "text/javascript");
+    });
+    server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(SPIFFS, "/data.txt", "text/plain");
     });
 
     // Send a GET request to <IP>/get?message=<message>
@@ -109,6 +116,7 @@ void setup() {
         }
         request->send(200, "text/plain", "Hello, POST: " + message);
     });
+    write();
 
     server.onNotFound(notFound);
 
@@ -116,4 +124,9 @@ void setup() {
 }
 
 void loop() {
+    if( (millis()- rememberTime) >= duration){   
+    append();
+    read();// change the state of LED
+    rememberTime=millis();// remember Current millis() time
+    }
 }
