@@ -4,7 +4,7 @@
 	<title>Teplomer</title>
 	<script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <link rel="stylesheet" type="text/javascript" href="script.js">
+
 </head>
 
 <body>
@@ -12,6 +12,7 @@
     <div class="chart-container" position: relative; height:350px; width:100%>
         <canvas id="Chart" width="400" height="400"></canvas>
     </div>
+    <button><a href="readADC" download="file.csv">Export</a></button>
 <div>
 	<table id="dataTable">
 	  <tr><th>Cas</th><th>Teplota</th></tr>
@@ -19,6 +20,7 @@
 </div>
 <br>
 <br>
+<script src="script.js"></script>
 </body>
 
 </html>

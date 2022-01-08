@@ -1,64 +1,85 @@
-//
-// A simple server implementation showing how to:
-//  * serve static messages
-//  * read GET and POST parameters
-//  * handle missing pages / 404s
-//
-
 #include <Arduino.h>
-#ifdef ESP32
-#include <WiFi.h>
-#include <AsyncTCP.h>
-#elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
-#endif
 #include <ESPAsyncWebServer.h>
-//#include <LittleFS.h>
 #include <Adafruit_Sensor.h>
-#include <FS.h>
+#include <DHT.h>
+#include <LittleFS.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
 
 AsyncWebServer server(80);
 
-const char* ssid = "AndroidAP_8064";
-const char* password = "something";
+const char* ssid = "wifi";
+const char* password = "0700848237";
 
 const char* PARAM_MESSAGE = "message";
 
-const long duration = 5000;
+const long duration = 2000;
 long rememberTime=0;
 
-//#define DHTPIN 4
-//#define DHTTYPE 22
-//DHT dht(DHTPIN, DHTTYPE);
+
+#define DHTPIN D4
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
+const long utcOffsetInSeconds = 3600;
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+
 
 void notFound(AsyncWebServerRequest *request) {
     request->send(404, "text/plain", "Not found");
 }
 
 void write(){
-    File file = SPIFFS.open("/data.txt", "w");
+    File file = LittleFS.open("/data.csv", "w");
     file.close();
 }
 
 void append(){
-    File file = SPIFFS.open("/data.txt", "a");
-    file.print("temperature ");
+    File file = LittleFS.open("/data.csv", "a");
+    if(!file){
+        Serial.println("Chyba otevření souboru");
+        return;
+    }
+    float t = dht.readTemperature();
+    String value = "";
+    Serial.println(t);
+  if (isnan(t)) {
+    Serial.println(F("Failed to read from DHT sensor!"));
+    return;
+  }
+    value = String(timeClient.getHours()) + ":" + String(timeClient.getMinutes()) + ":" + String(timeClient.getSeconds()) + "," + String(t) + "\n";
+    file.print(value);
     file.close();
 }
 
 void read(){
-    File file = SPIFFS.open("/data.txt", "r");
+    File file = LittleFS.open("/data.csv", "r");
     while(file.available()){
         Serial.write(file.read());
     }
     Serial.println();
     file.close();
 }
+void dirs(){
+    String str = "";
+    Dir dir = LittleFS.openDir("/");
+    while (dir.next()) {
+    str += dir.fileName();
+    str += " / ";
+    str += dir.fileSize();
+    str += "\r\n";
+    Serial.print(str);
+    }
+}
 
 void setup() {
 
     Serial.begin(9600);
+    dht.begin();
+    timeClient.begin();
     Serial.println();
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
@@ -66,57 +87,27 @@ void setup() {
         Serial.printf("WiFi Failed!\n");
         return;
     }
-    if(!SPIFFS.begin()){
+    if(!LittleFS.begin()){
         Serial.println("Failed to start File System");
         return;
     }
-    String str = "";
-Dir dir = SPIFFS.openDir("/");
-while (dir.next()) {
-    str += dir.fileName();
-    str += " / ";
-    str += dir.fileSize();
-    str += "\r\n";
-}
-Serial.print(str);
+    dirs(); //files in ESP
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/index.html", "text/html");
+        request->send(LittleFS, "/index.html", "text/html"); //main page
     });
     server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/style.css", "text/css");
+        request->send(LittleFS, "/style.css", "text/css"); //style
     });
     server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/script.js", "text/javascript");
+        request->send(LittleFS, "/script.js", "text/javascript"); //script
     });
     server.on("/readADC", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/data.txt", "text/plain");
+        request->send(LittleFS, "/data.csv", "text/plain"); //file data
     });
-
-    // Send a GET request to <IP>/get?message=<message>
-    server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-        String message;
-        if (request->hasParam(PARAM_MESSAGE)) {
-            message = request->getParam(PARAM_MESSAGE)->value();
-        } else {
-            message = "No message sent";
-        }
-        request->send(200, "text/plain", "Hello, GET: " + message);
-    });
-
-    // Send a POST request to <IP>/post with a form field message set to <message>
-    server.on("/post", HTTP_POST, [](AsyncWebServerRequest *request){
-        String message;
-        if (request->hasParam(PARAM_MESSAGE, true)) {
-            message = request->getParam(PARAM_MESSAGE, true)->value();
-        } else {
-            message = "No message sent";
-        }
-        request->send(200, "text/plain", "Hello, POST: " + message);
-    });
-    write();
+    write();//creating file
 
     server.onNotFound(notFound);
 
@@ -124,9 +115,10 @@ Serial.print(str);
 }
 
 void loop() {
-    if( (millis()- rememberTime) >= duration){   
-    append();
-    read();// change the state of LED
+    if( (millis()- rememberTime) >= duration){
+        timeClient.update();  
+    append();// adding new values
+    read();// reading from file into console
     rememberTime=millis();// remember Current millis() time
     }
 }

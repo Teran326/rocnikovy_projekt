@@ -2,9 +2,6 @@ var values = [];
 var timeStamp = [];
 function showGraph()
 {
-    for (i = 0; i < arguments.length; i++) {
-    	values.push(arguments[i]);    
-    }
 
     var ctx = document.getElementById("Chart").getContext('2d');
     var Chart2 = new Chart(ctx, {
@@ -48,21 +45,27 @@ window.onload = function() {
 	showGraph(5,10,4,58);
 };
 
-//Ajax script to get ADC voltage at every 5 Seconds 
 
 setInterval(function() {
-  // Call a function repetatively with 5 Second interval
+  // Call a function repetatively
   getData();
-}, 2000); //5000mSeconds update rate
- 
+}, 60000); //update rate
+var lastTime = 0;
 function getData() {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
      //Push the data in array
-	var time = new Date().toLocaleTimeString();
-	var ADCValue = this.responseText; 
-      values.push(ADCValue);
+	var ADCValue = this.responseText;
+    var lines = ADCValue.split("\n");
+    var lastLine = lines[lines.length-2];
+    var time = lastLine.split(",")[0];
+    var value = lastLine.split(",")[1];
+    if(lastTime == time){
+        return;
+    }
+    lastTime = time;
+      values.push(value);
       timeStamp.push(time);
       showGraph();	//Update Graphs
 	//Update Data Table
@@ -71,7 +74,7 @@ function getData() {
 	  var cell1 = row.insertCell(0);
 	  var cell2 = row.insertCell(1);
 	  cell1.innerHTML = time;
-	  cell2.innerHTML = ADCValue;
+	  cell2.innerHTML = value;
     }
   };
   xhttp.open("GET", "readADC", true);	//Handle readADC server on ESP8266
